@@ -40,8 +40,6 @@ Anything with an ESP32 works for the minimal sketch:
 - Any ESP32 / ESP32-S2 / ESP32-S3 / ESP32-C3 dev board
 - Powered from a USB port (the car's own USB socket is ideal — 5 V, ~100 mA)
 
-For the display build you need a **LilyGO T-Display-S3 Touch** specifically, since the screen pinout is hardcoded.
-
 No SIM, no antenna mods, no soldering.
 
 ---
