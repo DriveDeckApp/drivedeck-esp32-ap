@@ -39,7 +39,7 @@ No SIM, no antenna mods, no soldering.
 No IDE, no toolchain, no command line. Plug the board in and flash it from a web page using the
 Web Serial API:
 
-**→ [Open the DriveDeck web flasher](https://drivedeck-esp32-flasher.vercel.app)**
+**→ [Open the DriveDeck web flasher](https://drivedeck-flasher.vercel.app)**
 
 1. Plug the ESP32 into your computer over USB
 2. Pick your board from the dropdown
