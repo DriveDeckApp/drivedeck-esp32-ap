@@ -15,30 +15,18 @@ rather build it yourself.
 
 ---
 
-## Why this exists
-
-Wireless CarPlay will not start unless the head unit advertises a **real Wi-Fi interface address**. Advertising a loopback address (`127.0.0.1`) does not work — the phone acknowledges the request and then silently refuses to connect.
-
-The interesting part is what follows from that. When the receiver and the phone are the *same* device, both ends of the connection share one address, so the operating system routes the traffic internally through loopback. **The video never crosses the air.**
-
-So this access point does not route anything, carry any bandwidth, or need an internet connection. Its entire job is:
-
-1. Broadcast an SSID
-2. Accept the association
-3. Hand out a DHCP lease so the phone's Wi-Fi interface gets a routable address
-
-That is why a $5 2.4 GHz ESP32 is enough, where you would otherwise need a 5 GHz travel router. Band and throughput are irrelevant when nothing travels over the link.
-
-> **Note:** this only holds for the single-device case. If you are mirroring a *separate* phone to a *separate* receiver, the stream really does cross the air and you need a proper 5 GHz access point.
-
----
-
 ## Hardware
 
 Anything with an ESP32 works for the minimal sketch:
 
 - Any ESP32 / ESP32-S2 / ESP32-S3 / ESP32-C3 dev board
 - Powered from a USB port (the car's own USB socket is ideal — 5 V, ~100 mA)
+
+Known-good boards:
+
+- **[ESP32 classic dev board](https://a.co/d/0bIfPpNL)** — cheapest option, works with the minimal sketch
+- **[LilyGO T-Display-S3 Touch](https://a.co/d/07MaoqIS)** — adds a screen showing the network details and
+  connection status, which is genuinely useful in the car
 
 No SIM, no antenna mods, no soldering.
 
@@ -162,6 +150,24 @@ Tap the screen to cycle, hold to restart the access point.
 - The app's link mode is *Shared Wi-Fi*, not Automatic or Loopback
 
 **Password rejected.** `AP_PASS` must be 8 characters or more. Shorter passwords leave the AP open and iOS will not match your saved credentials.
+
+---
+
+## Why this exists
+
+Wireless CarPlay will not start unless the head unit advertises a **real Wi-Fi interface address**. Advertising a loopback address (`127.0.0.1`) does not work — the phone acknowledges the request and then silently refuses to connect.
+
+The interesting part is what follows from that. When the receiver and the phone are the *same* device, both ends of the connection share one address, so the operating system routes the traffic internally through loopback. **The video never crosses the air.**
+
+So this access point does not route anything, carry any bandwidth, or need an internet connection. Its entire job is:
+
+1. Broadcast an SSID
+2. Accept the association
+3. Hand out a DHCP lease so the phone's Wi-Fi interface gets a routable address
+
+That is why a $5 2.4 GHz ESP32 is enough, where you would otherwise need a 5 GHz travel router. Band and throughput are irrelevant when nothing travels over the link.
+
+> **Note:** this only holds for the single-device case. If you are mirroring a *separate* phone to a *separate* receiver, the stream really does cross the air and you need a proper 5 GHz access point.
 
 ---
 
