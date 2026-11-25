@@ -9,7 +9,9 @@ Two sketches are included:
 | [`DriveDeckAP-minimal`](DriveDeckAP-minimal) | **Any** ESP32 / S2 / S3 / C3 | Access point only. No extra libraries. |
 | [`DriveDeckAP`](DriveDeckAP) | LilyGO **T-Display-S3 (Touch)** | Access point + on-screen status, credentials and setup pages |
 
-If you just want it working, flash the minimal sketch. It is about 40 lines and has no dependencies.
+If you just want it working: use the [web flasher](#option-a--from-your-browser-easiest) and pick your
+board — nothing to install. The minimal sketch is about 40 lines and has no dependencies if you would
+rather build it yourself.
 
 ---
 
@@ -46,7 +48,22 @@ No SIM, no antenna mods, no soldering.
 
 ## Flashing
 
-### Option A — Arduino IDE
+### Option A — from your browser (easiest)
+
+No IDE, no toolchain, no command line. Plug the board in and flash it from a web page using the
+Web Serial API:
+
+**→ [Open the DriveDeck web flasher](https://drivedeck-esp32-flasher.vercel.app)**
+
+1. Plug the ESP32 into your computer over USB
+2. Pick your board from the dropdown
+3. Press **Connect & Flash** and choose the serial port when prompted
+4. Confirm the install — it takes under a minute
+
+Requires a Chromium-based desktop browser (**Chrome, Edge or Opera**). Safari and Firefox do not
+implement Web Serial, and no browser on iOS does. If that is you, use Option B or C below.
+
+### Option B — Arduino IDE
 
 1. Install the **ESP32 board support package**: Arduino IDE → Settings → *Additional Boards Manager URLs*, add
    ```
@@ -68,7 +85,7 @@ No SIM, no antenna mods, no soldering.
 
 5. Select the port and press **Upload**.
 
-### Option B — arduino-cli
+### Option C — arduino-cli
 
 ```bash
 # One-time setup
