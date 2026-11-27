@@ -14,6 +14,7 @@
 // See the repository README for the full explanation and setup steps.
 
 #include <WiFi.h>
+#include <esp_bt.h>
 
 // ---------------------------------------------------------------- Configuration
 //
@@ -50,6 +51,12 @@ void startAP() {
 }
 
 void setup() {
+  // Bluetooth is never used here and the controller comes up by default; releasing it also
+  // returns its memory. The only power saving available on a board with no panel.
+  btStop();
+  esp_bt_controller_disable();
+  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
+
   Serial.begin(115200);
   delay(200);
 

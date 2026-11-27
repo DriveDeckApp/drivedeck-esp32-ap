@@ -14,11 +14,18 @@
 // actually assigned, so you can confirm the app advertises a matching address.
 //
 // Touch: tap = next page. Long press = restart the access point.
+//
+// Power: Bluetooth is switched off at boot (this board never uses it) and the backlight stays dark
+// until the screen is touched, then dims again after 30 s of no touches. The panel draws more than
+// the radio does on this board, so keeping it dark is the single largest saving available without
+// sleeping the chip — and sleeping is not an option here, because deep sleep switches off the
+// access point and the phone would then have nothing to connect to in order to wake it.
 
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <Arduino_GFX_Library.h>
 #include <CST816S.h>
+#include <esp_bt.h>
 
 // ---------------------------------------------------------------- Access point
 
@@ -31,6 +38,9 @@ static const int   AP_MAX_CLIENTS = 4;
 
 #define PIN_POWER_ON 15  // must be driven HIGH or the board powers down off USB
 #define PIN_LCD_BL   38
+
+// How long the screen stays lit after a touch.
+#define BACKLIGHT_TIMEOUT_MS 30000UL
 
 // 8-bit parallel (8080) LCD — not SPI.
 Arduino_DataBus *bus = new Arduino_ESP32LCD8(
@@ -46,6 +56,23 @@ Arduino_GFX *gfx = new Arduino_ST7789(
 
 // CST816S capacitive touch: sda, scl, rst, irq
 CST816S touch(18, 17, 21, 16);
+
+// Backlight state. Starts dark on purpose: the board normally sits unattended behind a dashboard,
+// so lighting the panel by default would burn power nobody is looking at.
+static bool backlightOn = false;
+static unsigned long lastTouchMs = 0;
+
+static void setBacklight(bool on) {
+  if (on == backlightOn) return;
+  backlightOn = on;
+  digitalWrite(PIN_LCD_BL, on ? HIGH : LOW);
+}
+
+// Called on every touch: lights the screen and restarts the timeout.
+static void noteTouch() {
+  lastTouchMs = millis();
+  setBacklight(true);
+}
 
 // ---------------------------------------------------------------- Colours
 
@@ -273,11 +300,20 @@ void setup() {
   delay(100);
   Serial.println("\n[DriveDeckAP] booting");
 
+  // Bluetooth is never used by this firmware, and the controller is powered up by default. Releasing
+  // it also hands back its memory.
+  btStop();
+  esp_bt_controller_disable();
+  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
+  Serial.println("[Power] bluetooth off");
+
   gfx->begin();
   gfx->fillScreen(C_BG);
 
   pinMode(PIN_LCD_BL, OUTPUT);
+  // Lit through boot so the startup messages are visible, then released to the timeout below.
   digitalWrite(PIN_LCD_BL, HIGH);
+  backlightOn = true;
 
   gfx->setTextColor(C_ACCENT);
   gfx->setTextSize(2);
@@ -294,11 +330,25 @@ void setup() {
   delay(400);
   refreshClients();
   drawPage(true);
+
+  // Start the countdown from boot, so an unattended board goes dark on its own.
+  lastTouchMs = millis();
 }
 
 void loop() {
   // Touch: tap cycles pages, long press restarts the AP.
   if (touch.available()) {
+    bool wasDark = !backlightOn;
+    noteTouch();
+
+    // A touch on a dark screen only wakes it. Acting on that same touch would mean the page
+    // changed before the user could see which page they were on.
+    if (wasDark) {
+      drawPage(true);
+      delay(10);
+      return;
+    }
+
     if (touch.data.gestureID == LONG_PRESS) {
       gfx->fillScreen(C_BG);
       value(6, 70, "Restarting AP...", C_WARN, 2);
@@ -314,6 +364,13 @@ void loop() {
     }
   }
 
+  // Dim once the timeout passes. Subtraction on unsigned millis() is wrap-safe, so this still
+  // behaves correctly after the ~49 day rollover.
+  if (backlightOn && (millis() - lastTouchMs > BACKLIGHT_TIMEOUT_MS)) {
+    setBacklight(false);
+    Serial.println("[Power] backlight off");
+  }
+
   // Poll the station list once a second; redraw only when something changed.
   if (millis() - lastDraw > 1000) {
     lastDraw = millis();
@@ -323,7 +380,8 @@ void loop() {
       Serial.print("[AP] clients=");
       Serial.println(clientCount);
     }
-    drawPage(false);
+    // Nothing to see while the panel is dark, and the redraw costs both power and SPI traffic.
+    if (backlightOn) drawPage(false);
   }
 
   delay(10);
